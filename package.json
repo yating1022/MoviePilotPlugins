@@ -2,7 +2,7 @@
   "FruitStrm": {
     "name": "FruitStrm",
     "description": "媒体整理完成后，按路径前缀映射生成 STRM 文件",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "v2": true,
     "icon": "directory.png",
     "author": "fruits",

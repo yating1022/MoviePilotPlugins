@@ -63,9 +63,9 @@ class FruitStrm(_PluginBase):
 		for source_file, target_file in zip(source_files, target_files):
 			if not source_file or not target_file:
 				continue
-			self._create_strm_file(source_path=source_file, dest_path=target_file)
+			self._create_strm_file(dest_path=target_file)
 
-	def _create_strm_file(self, source_path: str, dest_path: str):
+	def _create_strm_file(self, dest_path: str):
 		if not self._mp_media_prefix or not self._strm_prefix:
 			logger.warning("MP媒体库前缀 或 strm库前缀 未配置，跳过 STRM 生成")
 			return
@@ -86,8 +86,8 @@ class FruitStrm(_PluginBase):
 
 		try:
 			strm_path.parent.mkdir(parents=True, exist_ok=True)
-			strm_path.write_text(source_path, encoding="utf-8")
-			logger.info(f"STRM 已生成：{strm_path} -> {source_path}")
+			strm_path.write_text(dest_path, encoding="utf-8")
+			logger.info(f"STRM 已生成：{strm_path} -> {dest_path}")
 		except Exception as err:
 			logger.error(f"创建 STRM 失败：{strm_path}，错误：{err}")
 
@@ -201,7 +201,7 @@ class FruitStrm(_PluginBase):
 										"props": {
 											"type": "info",
 											"variant": "tonal",
-											"text": "监听转移完成事件：当 transfer.dest 以 MP媒体库前缀 开头时，替换为 strm库前缀 并创建同名 .strm 文件，文件内容为 transfer.src。若设置了 STRM保存目录，则将 .strm 文件保存到该目录下（保留相对子目录结构）。"
+											"text": "监听转移完成事件：当 transfer.dest 以 MP媒体库前缀 开头时，替换为 strm库前缀 并创建同名 .strm 文件，文件内容为 transfer.dest（目标文件路径）。若设置了 STRM保存目录，则将 .strm 文件保存到该目录下（保留相对子目录结构）。"
 										}
 									}
 								]
@@ -222,7 +222,7 @@ class FruitStrm(_PluginBase):
 										"props": {
 											"type": "success",
 											"variant": "tonal",
-											"text": "逻辑示意：TransferComplete -> 读取 transfer.src/transfer.dest -> 判断 dest.startswith(mp_media_prefix) -> 计算相对路径 -> 若设置 STRM保存目录 则拼接到该目录，否则按前缀替换 -> 写入 .strm 文件（内容为 transfer.src）"
+											"text": "逻辑示意：TransferComplete -> 读取 transfer.src/transfer.dest -> 判断 dest.startswith(mp_media_prefix) -> 计算相对路径 -> 若设置 STRM保存目录 则拼接到该目录，否则按前缀替换 -> 写入 .strm 文件（内容为 transfer.dest）"
 										}
 									}
 								]
