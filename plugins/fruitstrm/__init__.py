@@ -16,7 +16,7 @@ class FruitStrm(_PluginBase):
 	# 插件图标
 	plugin_icon = "directory.png"
 	# 插件版本
-	plugin_version = "1.0.1"
+	plugin_version = "1.0.2"
 	# 插件作者
 	plugin_author = "fruits"
 	# 作者主页
@@ -83,11 +83,12 @@ class FruitStrm(_PluginBase):
 			strm_target = f"{self._strm_prefix}{relative_path}"
 
 		strm_path = Path(strm_target).with_suffix(".strm")
+		strm_content = f"{self._strm_prefix}{relative_path}"
 
 		try:
 			strm_path.parent.mkdir(parents=True, exist_ok=True)
-			strm_path.write_text(dest_path, encoding="utf-8")
-			logger.info(f"STRM 已生成：{strm_path} -> {dest_path}")
+			strm_path.write_text(strm_content, encoding="utf-8")
+			logger.info(f"STRM 已生成：{strm_path} -> {strm_content}")
 		except Exception as err:
 			logger.error(f"创建 STRM 失败：{strm_path}，错误：{err}")
 

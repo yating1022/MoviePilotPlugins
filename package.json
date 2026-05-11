@@ -2,8 +2,13 @@
   "FruitStrm": {
     "name": "FruitStrm",
     "description": "媒体整理完成后，按路径前缀映射生成 STRM 文件",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "v2": true,
+    "history": {
+      "v1.0.2": "修复 STRM 文件内容未做前缀替换的问题，新增 STRM 保存目录配置项",
+      "v1.0.1": "修复 STRM 文件内容错误写入源路径的问题，改为写入目标路径",
+      "v1.0.0": "初始版本，监听转移完成事件生成 STRM 文件"
+    },
     "icon": "directory.png",
     "author": "fruits",
     "level": 1
