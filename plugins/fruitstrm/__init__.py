@@ -8,21 +8,21 @@ from app.schemas import TransferInfo
 from app.schemas.types import EventType
 
 
-class StrmTransfer(_PluginBase):
+class FruitStrm(_PluginBase):
 	# 插件名称
-	plugin_name = "StrmTransfer"
+	plugin_name = "FruitStrm"
 	# 插件描述
-	plugin_desc = "转移完成后，按路径前缀映射生成 STRM 文件"
+	plugin_desc = "媒体整理完成后，按路径前缀映射生成 STRM 文件"
 	# 插件图标
 	plugin_icon = "directory.png"
 	# 插件版本
 	plugin_version = "1.0.0"
 	# 插件作者
-	plugin_author = "honue"
+	plugin_author = "fruits"
 	# 作者主页
 	author_url = "https://github.com/honue"
 	# 插件配置项 ID 前缀
-	plugin_config_prefix = "strmtransfer_"
+	plugin_config_prefix = "fruitstrm_"
 	# 加载顺序
 	plugin_order = 1
 	# 可使用的用户级别
@@ -31,12 +31,14 @@ class StrmTransfer(_PluginBase):
 	_enable: bool = False
 	_mp_media_prefix: str = "/downloads/link"
 	_strm_prefix: str = "/strm"
+	_strm_save_dir: str = ""
 
 	def init_plugin(self, config: dict = None):
 		if config:
 			self._enable = config.get("enable") or False
 			self._mp_media_prefix = (config.get("mp_media_prefix") or "/downloads/link").strip()
 			self._strm_prefix = (config.get("strm_prefix") or "/strm").strip()
+			self._strm_save_dir = (config.get("strm_save_dir") or "").strip()
 
 	@eventmanager.register(EventType.TransferComplete)
 	def transfer_complete(self, event: Event):
@@ -73,7 +75,13 @@ class StrmTransfer(_PluginBase):
 			logger.debug(f"目标路径不以 MP媒体库 前缀开头，跳过 dest={dest_path}")
 			return
 
-		strm_target = f"{self._strm_prefix}{dest_path[len(self._mp_media_prefix):]}"
+		relative_path = dest_path[len(self._mp_media_prefix):]
+
+		if self._strm_save_dir:
+			strm_target = str(Path(self._strm_save_dir) / relative_path.lstrip("/\\"))
+		else:
+			strm_target = f"{self._strm_prefix}{relative_path}"
+
 		strm_path = Path(strm_target).with_suffix(".strm")
 
 		try:
@@ -168,11 +176,32 @@ class StrmTransfer(_PluginBase):
 								},
 								"content": [
 									{
+										"component": "VTextField",
+										"props": {
+											"model": "strm_save_dir",
+											"label": "STRM保存目录",
+											"placeholder": "留空则使用 strm库前缀 替换 MP媒体库前缀"
+										}
+									}
+								]
+							}
+						]
+					},
+					{
+						"component": "VRow",
+						"content": [
+							{
+								"component": "VCol",
+								"props": {
+									"cols": 12
+								},
+								"content": [
+									{
 										"component": "VAlert",
 										"props": {
 											"type": "info",
 											"variant": "tonal",
-											"text": "监听转移完成事件：当 transfer.dest 以 MP媒体库前缀 开头时，替换为 strm库前缀 并创建同名 .strm 文件，文件内容为 transfer.src。"
+											"text": "监听转移完成事件：当 transfer.dest 以 MP媒体库前缀 开头时，替换为 strm库前缀 并创建同名 .strm 文件，文件内容为 transfer.src。若设置了 STRM保存目录，则将 .strm 文件保存到该目录下（保留相对子目录结构）。"
 										}
 									}
 								]
@@ -193,7 +222,7 @@ class StrmTransfer(_PluginBase):
 										"props": {
 											"type": "success",
 											"variant": "tonal",
-											"text": "逻辑示意：TransferComplete -> 读取 transfer.src/transfer.dest -> 判断 dest.startswith(mp_media_prefix) -> 计算 strm_path(前缀替换 + 后缀改为 .strm) -> 写入内容为 transfer.src"
+											"text": "逻辑示意：TransferComplete -> 读取 transfer.src/transfer.dest -> 判断 dest.startswith(mp_media_prefix) -> 计算相对路径 -> 若设置 STRM保存目录 则拼接到该目录，否则按前缀替换 -> 写入 .strm 文件（内容为 transfer.src）"
 										}
 									}
 								]
@@ -205,7 +234,8 @@ class StrmTransfer(_PluginBase):
 		], {
 			"enable": self._enable,
 			"mp_media_prefix": self._mp_media_prefix,
-			"strm_prefix": self._strm_prefix
+			"strm_prefix": self._strm_prefix,
+			"strm_save_dir": self._strm_save_dir
 		}
 
 	def get_page(self) -> Optional[List[dict]]:

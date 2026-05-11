@@ -4,53 +4,9 @@
 https://github.com/honue/MoviePilot-Plugins/
 ```
 
-- [ANi-Strm插件](./docs/anistrm.md)
+- FruitStrm
 
-> 从[Ani Open](https://aniopen.an-i.workers.dev/)自动抓取，生成strm文件，由mp刮削入库
-
-- Bangumi榜单&想看订阅
-
-> Bangumi [成员关注动画榜](https://bgm.tv/anime)订阅，时下流行番剧订阅，个人想看订阅
-
-- Bangumi打格子
-
-> 将媒体服务器在看活动，同步到 [bangumi日志](https://bgm.tv/)
-
-- [Tracker替换插件](./docs/trackereditor.md)
-
-> 批量替换 tracker
-
-- [自适应IntroSkip](./docs/introskip.md)
-
-> 自适应生成IntroSkip片头标记，Emby跳片头、片尾（不推荐使用，刷新元数据会导致strm媒体信息丢失，需要Emby插件配合使用，而Emby插件已包含此功能）
-
-> Emby 4.8 可使用 StrmAssistant 社区版：https://github.com/sjtuross/StrmAssistant。
-
-> 若使用 Emby 4.9，社区版本不支持，可以考虑使用我参考神医插件编写的项目：https://github.com/honue/MediaInfoKeeper
-
-- 共享识别词
-
-> 从Github远程文件中，获取共享识别词并添加
-
-- 收藏更新通知
-
-> 在Emby上收藏剧集，当有新集更新时发送通知。适合针对性的获取剧集更新通知、榜单订阅时有不看的剧集不想收到更新通知。
-
-- 豆瓣书影音档案
-
-> 将在看的剧集自动同步到[豆瓣书影音档案](https://www.douban.com/note/745865495)
-
-- 快捷指令订阅
-
-> IOS快捷指令，快速选片添加订阅
-
-- 插件日志删除
-
-> 定时清理插件产生的日志
-
-- 豆瓣即将播出订阅
-
-> 豆瓣APP，即将播出剧集列表，按想看人数阈值自动添加订阅
+> 媒体整理完成后，按路径前缀映射生成 STRM 文件
 
 ### 如果对你有所帮助⭐
 
