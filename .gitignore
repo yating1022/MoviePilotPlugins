@@ -1,1 +1,6 @@
 test/
+MoviePilot-2/
+.claude/
+.cursor/
+.trellis/
+AGENTS.md

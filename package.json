@@ -12,5 +12,17 @@
     "icon": "directory.png",
     "author": "fruits",
     "level": 1
+  },
+  "Fruits115": {
+    "name": "Fruits115",
+    "description": "媒体整理完成后，将源文件复制/上传到指定存储驱动目录",
+    "version": "1.0.0",
+    "v2": true,
+    "history": {
+      "v1.0.0": "初始版本，监听转移完成事件，将源文件整理到指定存储驱动目标路径"
+    },
+    "icon": "directory.png",
+    "author": "fruits",
+    "level": 1
   }
 }
