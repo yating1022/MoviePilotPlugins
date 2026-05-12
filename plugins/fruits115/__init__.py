@@ -20,7 +20,7 @@ class Fruits115(_PluginBase):
     plugin_name = "Fruits115"
     plugin_desc = "媒体整理完成后，将源文件复制/上传到指定存储驱动目录"
     plugin_icon = "directory.png"
-    plugin_version = "1.0.1"
+    plugin_version = "1.0.2"
     plugin_author = "fruits"
     author_url = "https://github.com/yating1022"
     plugin_config_prefix = "fruits115_"
@@ -311,8 +311,7 @@ class Fruits115(_PluginBase):
         """
         模拟测试插件执行
         POST /api/v1/plugin/Fruits115/test
-        Body: {"history_id": 123}
-        选择一条整理记录，模拟触发插件逻辑并输出结果。
+        Body: {"history_id": 123} 或 {}（自动选择最近一条记录）
         """
         try:
             body = await request.json() if request.headers.get("content-type") == "application/json" else {}
@@ -320,18 +319,19 @@ class Fruits115(_PluginBase):
             body = {}
 
         history_id = body.get("history_id")
-        if not history_id:
-            return {"success": False, "message": "请选择一条整理记录进行测试"}
 
         if not self._target_storage or not self._target_path:
             return {"success": False, "message": "目标存储驱动或目标路径未配置，请先保存配置"}
 
-        # 1. 查询整理记录
+        # 1. 查询整理记录：未指定则自动取最近一条
         try:
-            history_oper = TransferHistoryOper()
-            record = history_oper.get(historyid=int(history_id))
+            if history_id:
+                record = TransferHistoryOper().get(historyid=int(history_id))
+            else:
+                records = TransferHistory.list_by_page(page=1, count=1, status=True)
+                record = records[0] if records else None
             if not record:
-                return {"success": False, "message": f"未找到记录 ID={history_id}"}
+                return {"success": False, "message": f"未找到整理记录{' ID=' + str(history_id) if history_id else '（数据库为空）'}"}
         except Exception as e:
             return {"success": False, "message": f"查询记录失败：{e}"}
 
@@ -447,26 +447,6 @@ class Fruits115(_PluginBase):
                         "content": [
                             {
                                 "component": "VCol",
-                                "props": {"cols": 12, "md": 8},
-                                "content": [
-                                    {
-                                        "component": "VSelect",
-                                        "props": {
-                                            "model": "history_id",
-                                            "label": "选择整理记录（用于测试）",
-                                            "items": {
-                                                "action": "call",
-                                                "url": "/plugin/Fruits115/history",
-                                                "method": "GET",
-                                            },
-                                            "placeholder": "点击加载最近整理记录",
-                                            "clearable": True,
-                                        },
-                                    }
-                                ],
-                            },
-                            {
-                                "component": "VCol",
                                 "props": {"cols": 12, "md": 4},
                                 "content": [
                                     {
@@ -481,7 +461,21 @@ class Fruits115(_PluginBase):
                                                 "method": "POST",
                                             },
                                         },
-                                        "text": "模拟测试",
+                                        "text": "立即运行一次",
+                                    }
+                                ],
+                            },
+                            {
+                                "component": "VCol",
+                                "props": {"cols": 12, "md": 8},
+                                "content": [
+                                    {
+                                        "component": "VAlert",
+                                        "props": {
+                                            "type": "info",
+                                            "variant": "tonal",
+                                            "text": "自动选择最近一条成功整理记录，模拟触发插件执行并输出结果。",
+                                        },
                                     }
                                 ],
                             },
@@ -639,7 +633,6 @@ class Fruits115(_PluginBase):
             "target_storage": self._target_storage,
             "target_path": self._target_path,
             "transfer_type": self._transfer_type,
-            "history_id": None,
         }
 
     def get_page(self) -> Optional[List[dict]]:
