@@ -6,6 +6,8 @@ from fastapi import Request
 
 from app.core.event import Event
 from app.core.event import eventmanager
+from app.db.models.transferhistory import TransferHistory
+from app.db.transferhistory_oper import TransferHistoryOper
 from app.helper.storage import StorageHelper
 from app.log import logger
 from app.modules.filemanager.storages import StorageBase
@@ -18,9 +20,9 @@ class Fruits115(_PluginBase):
     plugin_name = "Fruits115"
     plugin_desc = "媒体整理完成后，将源文件复制/上传到指定存储驱动目录"
     plugin_icon = "directory.png"
-    plugin_version = "1.0.0"
+    plugin_version = "1.0.1"
     plugin_author = "fruits"
-    author_url = "https://github.com/honue"
+    author_url = "https://github.com/yating1022"
     plugin_config_prefix = "fruits115_"
     plugin_order = 1
     auth_level = 1
@@ -112,21 +114,21 @@ class Fruits115(_PluginBase):
         source_files = transfer_info.file_list or []
         target_files = transfer_info.file_list_new or []
         if not source_files or not target_files:
-            logger.debug("[Fruits115] 转移事件缺少源或目标文件列表，跳过")
+            logger.debug("转移事件缺少源或目标文件列表，跳过")
             return
 
         if not self._target_storage or not self._target_path:
-            logger.warning("[Fruits115] 目标存储驱动或目标路径未配置，跳过")
+            logger.warning("目标存储驱动或目标路径未配置，跳过")
             return
 
         target_oper = self._get_target_storage_oper()
         if not target_oper:
-            logger.error(f"[Fruits115] 无法加载目标存储驱动：{self._target_storage}")
+            logger.error(f"无法加载目标存储驱动：{self._target_storage}")
             return
 
         if len(source_files) != len(target_files):
             logger.warning(
-                f"[Fruits115] 源/目标文件数量不一致，"
+                f"源/目标文件数量不一致，"
                 f"source={len(source_files)} target={len(target_files)}，仅处理可配对部分"
             )
 
@@ -137,11 +139,11 @@ class Fruits115(_PluginBase):
 
     def _process_file(self, source_path: str, dest_path: str, target_oper: StorageBase):
         if not self._mp_media_prefix:
-            logger.warning("[Fruits115] MP媒体库前缀 未配置，跳过")
+            logger.warning("MP媒体库前缀 未配置，跳过")
             return
 
         if not dest_path.startswith(self._mp_media_prefix):
-            logger.debug(f"[Fruits115] 目标路径不以 MP媒体库 前缀开头，跳过 dest={dest_path}")
+            logger.debug(f"目标路径不以 MP媒体库 前缀开头，跳过 dest={dest_path}")
             return
 
         relative_path = dest_path[len(self._mp_media_prefix):].lstrip("/\\")
@@ -149,20 +151,20 @@ class Fruits115(_PluginBase):
         new_name = Path(relative_path).name
 
         logger.info(
-            f"[Fruits115] 处理文件：{source_path} -> "
+            f"处理文件：{source_path} -> "
             f"{self._target_storage}:{target_dir / new_name}（{self._transfer_type}）"
         )
 
         source_file = Path(source_path)
         if not source_file.exists():
-            logger.error(f"[Fruits115] 源文件不存在：{source_path}")
+            logger.error(f"源文件不存在：{source_path}")
             return
 
         result = self._do_transfer(source_file, target_dir, new_name, target_oper)
         if result:
-            logger.info(f"[Fruits115] 成功：{source_path} -> {self._target_storage}:{target_dir / new_name}")
+            logger.info(f"成功：{source_path} -> {self._target_storage}:{target_dir / new_name}")
         else:
-            logger.error(f"[Fruits115] 失败：{source_path} -> {self._target_storage}:{target_dir / new_name}")
+            logger.error(f"失败：{source_path} -> {self._target_storage}:{target_dir / new_name}")
 
     def _do_transfer(
         self,
@@ -194,12 +196,12 @@ class Fruits115(_PluginBase):
 
             # 本地 -> 云存储：link/softlink 不可用，回退为 copy
             if transfer_type in ("link", "softlink"):
-                logger.info(f"[Fruits115] 云存储不支持 {transfer_type}，回退为 copy")
+                logger.info(f"云存储不支持 {transfer_type}，回退为 copy")
                 transfer_type = "copy"
 
             folder_item = target_oper.get_folder(target_dir)
             if not folder_item:
-                logger.error(f"[Fruits115] 无法创建或获取目标目录：{target_dir}")
+                logger.error(f"无法创建或获取目标目录：{target_dir}")
                 return False
 
             uploaded = target_oper.upload(
@@ -214,13 +216,13 @@ class Fruits115(_PluginBase):
             if transfer_type == "move":
                 try:
                     source_file.unlink()
-                    logger.info(f"[Fruits115] 已删除源文件（move 模式）：{source_file}")
+                    logger.info(f"已删除源文件（move 模式）：{source_file}")
                 except Exception as e:
-                    logger.warning(f"[Fruits115] 删除源文件失败：{source_file}，{e}")
+                    logger.warning(f"删除源文件失败：{source_file}，{e}")
 
             return True
         except Exception as e:
-            logger.error(f"[Fruits115] 文件传输异常：{e}")
+            logger.error(f"文件传输异常：{e}")
             return False
 
     @staticmethod
@@ -244,10 +246,10 @@ class Fruits115(_PluginBase):
                 target_file = target_dir / new_name
                 return target_oper.softlink(source_item, target_file)
             else:
-                logger.error(f"[Fruits115] 不支持的整理方式：{transfer_type}")
+                logger.error(f"不支持的整理方式：{transfer_type}")
                 return False
         except Exception as e:
-            logger.error(f"[Fruits115] 本地整理异常：{e}")
+            logger.error(f"本地整理异常：{e}")
             return False
 
     # ---------------------------------------------------------------------------
@@ -264,57 +266,155 @@ class Fruits115(_PluginBase):
     def get_api(self) -> List[Dict[str, Any]]:
         return [
             {
-                "path": "/test_storage",
-                "endpoint": self.test_storage,
+                "path": "/history",
+                "endpoint": self.get_history,
+                "methods": ["GET"],
+                "auth": "apikey",
+                "summary": "获取最近整理记录",
+                "description": "返回最近 20 条成功的转移记录，供测试模拟选择",
+            },
+            {
+                "path": "/test",
+                "endpoint": self.test_transfer,
                 "methods": ["POST"],
                 "auth": "apikey",
-                "summary": "测试存储驱动连接",
-                "description": "测试指定存储驱动是否可用，验证目标路径是否存在",
-            }
+                "summary": "模拟测试插件执行",
+                "description": "选择一条整理记录，模拟触发插件逻辑",
+            },
         ]
 
-    async def test_storage(self, request: Request):
+    async def get_history(self):
         """
-        测试存储驱动连接
-        POST /api/v1/plugin/Fruits115/test_storage
-        Body: {"storage": "u115", "path": "/some/path"}
+        GET /api/v1/plugin/Fruits115/history
+        返回最近的成功转移记录供测试选择
+        """
+        try:
+            records = TransferHistory.list_by_page(page=1, count=20, status=True)
+            if not records:
+                return {"success": True, "data": []}
+            items = []
+            for r in records:
+                label = f"{r.title or '未知'} | {r.dest or r.src}"
+                items.append({
+                    "title": label,
+                    "value": r.id,
+                    "src": r.src,
+                    "dest": r.dest,
+                    "files": r.files or [],
+                })
+            return {"success": True, "data": items}
+        except Exception as e:
+            logger.error(f"获取整理记录失败：{e}")
+            return {"success": False, "message": str(e)}
+
+    async def test_transfer(self, request: Request):
+        """
+        模拟测试插件执行
+        POST /api/v1/plugin/Fruits115/test
+        Body: {"history_id": 123}
+        选择一条整理记录，模拟触发插件逻辑并输出结果。
         """
         try:
             body = await request.json() if request.headers.get("content-type") == "application/json" else {}
         except Exception:
             body = {}
-        storage = (body.get("storage") or "").strip() or self._target_storage
-        path = (body.get("path") or "").strip() or self._target_path
-        if not storage:
-            return {"success": False, "message": "未指定存储驱动"}
 
-        oper = self._get_storage_oper(storage)
-        if not oper:
-            return {"success": False, "message": f"无法加载存储驱动：{storage}"}
+        history_id = body.get("history_id")
+        if not history_id:
+            return {"success": False, "message": "请选择一条整理记录进行测试"}
+
+        if not self._target_storage or not self._target_path:
+            return {"success": False, "message": "目标存储驱动或目标路径未配置，请先保存配置"}
+
+        # 1. 查询整理记录
+        try:
+            history_oper = TransferHistoryOper()
+            record = history_oper.get(historyid=int(history_id))
+            if not record:
+                return {"success": False, "message": f"未找到记录 ID={history_id}"}
+        except Exception as e:
+            return {"success": False, "message": f"查询记录失败：{e}"}
+
+        # 2. 检查存储驱动可用性
+        target_oper = self._get_target_storage_oper()
+        if not target_oper:
+            return {"success": False, "message": f"无法加载存储驱动：{self._target_storage}"}
 
         try:
-            available = oper.check()
-            if not available:
-                return {"success": False, "message": f"存储驱动 {storage} 连接失败"}
+            if not target_oper.check():
+                return {"success": False, "message": f"存储驱动 {self._target_storage} 连接失败，请检查配置"}
         except Exception as e:
-            return {"success": False, "message": f"存储驱动 {storage} 连接异常：{e}"}
+            return {"success": False, "message": f"存储驱动连接异常：{e}"}
 
-        if path:
-            try:
-                folder_item = oper.get_folder(Path(path))
-                if not folder_item:
-                    return {"success": False, "message": f"目标路径不可访问：{path}"}
-            except Exception as e:
-                return {"success": False, "message": f"目标路径访问异常：{e}"}
+        # 3. 模拟插件逻辑
+        dest_path = record.dest or ""
+        source_files = record.files or []
 
-        return {"success": True, "message": f"存储驱动 {storage} 连接正常"}
+        if not self._mp_media_prefix:
+            return {"success": False, "message": "MP媒体库前缀 未配置，请先保存配置"}
+
+        if not dest_path.startswith(self._mp_media_prefix):
+            return {
+                "success": True,
+                "message": f"该记录 dest={dest_path} 不以 MP媒体库前缀（{self._mp_media_prefix}）开头，插件将跳过此记录",
+                "skipped": True,
+            }
+
+        if not source_files:
+            return {"success": False, "message": "该记录无源文件清单（files），无法模拟"}
+
+        # 4. 计算目标路径
+        relative_path = dest_path[len(self._mp_media_prefix):].lstrip("/\\")
+        target_dir = Path(self._target_path) / Path(relative_path).parent
+        new_name = Path(relative_path).name
+        target_full = target_dir / new_name
+
+        # 5. 检查目标路径可达性
+        try:
+            folder_item = target_oper.get_folder(target_dir)
+            if not folder_item:
+                return {
+                    "success": False,
+                    "message": f"目标路径不可访问：{target_dir}",
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"目标路径访问异常：{target_dir}，{e}",
+            }
+
+        # 6. 检查源文件存在性
+        source_checks = []
+        for src in source_files:
+            exists = Path(src).exists() if src else False
+            source_checks.append({"path": src, "exists": exists})
+
+        transfer_type = self._transfer_type
+        if self._target_storage != "local" and transfer_type in ("link", "softlink"):
+            transfer_type = "copy"
+
+        return {
+            "success": True,
+            "message": "模拟测试完成",
+            "record": {
+                "title": record.title,
+                "src": record.src,
+                "dest": record.dest,
+            },
+            "simulation": {
+                "mp_media_prefix": self._mp_media_prefix,
+                "target_storage": self._target_storage,
+                "target_path": str(target_full),
+                "transfer_type": transfer_type,
+                "source_files": source_checks,
+            },
+        }
 
     # ---------------------------------------------------------------------------
     # 配置页面
     # ---------------------------------------------------------------------------
 
     def get_form(self) -> Tuple[List[dict], Dict[str, Any]]:
-        # 存储驱动选项
         storagies = self._get_storagies()
         storage_items = [{"title": s["name"], "value": s["type"]} for s in storagies]
 
@@ -322,6 +422,7 @@ class Fruits115(_PluginBase):
             {
                 "component": "VForm",
                 "content": [
+                    # 启用开关 + 测试按钮行
                     {
                         "component": "VRow",
                         "content": [
@@ -338,6 +439,32 @@ class Fruits115(_PluginBase):
                                     }
                                 ],
                             },
+                        ],
+                    },
+                    # 测试区域
+                    {
+                        "component": "VRow",
+                        "content": [
+                            {
+                                "component": "VCol",
+                                "props": {"cols": 12, "md": 8},
+                                "content": [
+                                    {
+                                        "component": "VSelect",
+                                        "props": {
+                                            "model": "history_id",
+                                            "label": "选择整理记录（用于测试）",
+                                            "items": {
+                                                "action": "call",
+                                                "url": "/plugin/Fruits115/history",
+                                                "method": "GET",
+                                            },
+                                            "placeholder": "点击加载最近整理记录",
+                                            "clearable": True,
+                                        },
+                                    }
+                                ],
+                            },
                             {
                                 "component": "VCol",
                                 "props": {"cols": 12, "md": 4},
@@ -350,16 +477,17 @@ class Fruits115(_PluginBase):
                                             "color": "info",
                                             "onClick": {
                                                 "action": "call",
-                                                "url": "/plugin/Fruits115/test_storage",
+                                                "url": "/plugin/Fruits115/test",
                                                 "method": "POST",
                                             },
                                         },
-                                        "text": "测试连接",
+                                        "text": "模拟测试",
                                     }
                                 ],
                             },
                         ],
                     },
+                    # MP媒体库前缀
                     {
                         "component": "VRow",
                         "content": [
@@ -379,6 +507,7 @@ class Fruits115(_PluginBase):
                             }
                         ],
                     },
+                    # 目标存储 + 目标路径
                     {
                         "component": "VRow",
                         "content": [
@@ -413,6 +542,7 @@ class Fruits115(_PluginBase):
                             },
                         ],
                     },
+                    # 整理方式
                     {
                         "component": "VRow",
                         "content": [
@@ -462,6 +592,7 @@ class Fruits115(_PluginBase):
                             }
                         ],
                     },
+                    # 说明
                     {
                         "component": "VRow",
                         "content": [
@@ -508,6 +639,7 @@ class Fruits115(_PluginBase):
             "target_storage": self._target_storage,
             "target_path": self._target_path,
             "transfer_type": self._transfer_type,
+            "history_id": None,
         }
 
     def get_page(self) -> Optional[List[dict]]:

@@ -20,7 +20,7 @@ class FruitStrm(_PluginBase):
 	# 插件作者
 	plugin_author = "fruits"
 	# 作者主页
-	author_url = "https://github.com/honue"
+	author_url = "https://github.com/yating1022"
 	# 插件配置项 ID 前缀
 	plugin_config_prefix = "fruitstrm_"
 	# 加载顺序
